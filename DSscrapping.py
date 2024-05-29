@@ -1,12 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 
-def scrape_quotes_to_scrape():
+def scrape_quotes():
     base_url = "https://quotes.toscrape.com/page/{}/"
+    selected_tags = {"love", "inspirational", "life", "humor"}
     all_quotes = []
 
-    for i in range(1, 6):  # Pour scraper les 5 premières pages
-        url = base_url.format(i)
+    for page in range(1, 6):  # Scrape les 5 premières pages
+        url = base_url.format(page)
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -14,14 +15,17 @@ def scrape_quotes_to_scrape():
         
         for quote in quotes:
             text = quote.find('span', class_='text').text
-            author = quote.find('small', class_='author').text
-            tags = [tag.text for tag in quote.find_all('a', class_='tag')]
-            all_quotes.append({'text': text, 'author': author, 'tags': tags})
+            tags = {tag.text for tag in quote.find_all('a', class_='tag')}
+            
+            # Filtrer pour ne garder que les citations ayant des tags sélectionnés
+            if tags & selected_tags:
+                all_quotes.append({'quote': text, 'tags': list(tags & selected_tags)})
 
     return all_quotes
 
-# Exécutez cette fonction et imprimez les résultats
-quotes_data = scrape_quotes_to_scrape()
+# Exécutez cette fonction et affichez les résultats dans un tableau
+quotes_data = scrape_quotes()
 for quote in quotes_data:
     print(quote)
+
 
