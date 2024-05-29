@@ -1,26 +1,39 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
+import csv
 
-def scrape_filtered_quotes():
-    base_url = "https://quotes.toscrape.com/page/{}/"
-    selected_tags = {'love', 'inspirational', 'life', 'humor'}
-    all_quotes = []
+# URL de base et chemin de connexion
+base_url = 'https://quotes.toscrape.com'
+login_url = 'https://quotes.toscrape.com/login'
 
-    for page in range(1, 6):  
-        response = requests.get(base_url.format(page))
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        quotes = soup.find_all('div', class_='quote')
-        
-        for quote in quotes:
-            text = quote.find('span', class_='text').text
-            tags = {tag.text for tag in quote.find_all('a', class_='tag')}
-            if tags & selected_tags:  
-                all_quotes.append({'text': text, 'tags': ', '.join(tags & selected_tags)})
+# Détails du compte
+username = 'nayla'
+password = '123'
 
-    # écrire dans un fichier CSV
-    df = pd.DataFrame(all_quotes)
-    df.to_csv('results.csv', index=False)
+# Démarrer une session
+session = requests.Session()
 
-scrape_filtered_quotes()
+# Récupérer la page de connexion pour obtenir le token CSRF
+response = session.get(login_url)
+soup = BeautifulSoup(response.text, 'html.parser')
+csrf_token = soup.find('input', {'name': 'csrf_token'})['value']
+
+# Créer les données de la requête de connexion
+login_data = {
+    'csrf_token': csrf_token,
+    'username': username,
+    'password': password,
+}
+
+# Envoyer la requête de connexion
+session.post(login_url, data=login_data)
+
+# Supposons que le token que vous voulez est stocké dans un cookie
+# Nous utiliserons un cookie de session comme exemple
+token = session.cookies.get('session_token')  # Ajustez selon le vrai nom du cookie
+
+# Écrire le token dans un fichier CSV
+with open('results.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Token'])
+    writer.writerow([token])
